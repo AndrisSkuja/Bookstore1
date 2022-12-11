@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Scanner;
 import java.sql.*;
 //import java.sql.DriverManager;
@@ -238,7 +239,7 @@ public class Bookstore {
                     this.books.add(new Book(rs.getString(1), rs.getString(2), rs.getString(3),
                      rs.getString(4), rs.getString(5), rs.getInt(6), rs.getInt(7),
                       rs.getInt(8), rs.getInt(9), rs.getInt(10), rs.getInt(11),
-                       rs.getInt(12)));
+                       rs.getInt(12),rs.getInt(13)));
                 }
                 
                 System.out.println("Press 1 to return to search, and any other key to exit");
@@ -318,7 +319,7 @@ public class Bookstore {
                     this.books.add(new Book(rs.getString(1), rs.getString(2), rs.getString(3),
                      rs.getString(4), rs.getString(5), rs.getInt(6), rs.getInt(7),
                       rs.getInt(8), rs.getInt(9), rs.getInt(10), rs.getInt(11),
-                       rs.getInt(12)));
+                       rs.getInt(12),rs.getInt(13)));
                 }
                 
                 System.out.println("Press 1 to return to search, 2 to checkout books, and any other key to return to user menu");
@@ -342,7 +343,107 @@ public class Bookstore {
     }
 
     public void checkout(){
-        System.out.println("test");
+        Scanner input = new Scanner(System.in);
+        String confirm = "";
+        int selection = -1;
+        int amount = -1;
+        Connection connection = null;
+
+        boolean addingLoop = true;
+        boolean indexLoop = true;
+        boolean amountLoop = true;
+    
+        while(addingLoop){
+            System.out.println("Please enter the index for the book you wish to add to your basket");
+
+            while(indexLoop){
+                try {
+                    selection = input.nextInt();
+                    if(selection>=0 && selection<this.books.size()){
+                        indexLoop = false;
+                    }
+                    else{
+                        System.out.println("Please select an index within bounds of the search results");
+                    }
+                    
+                } catch (Exception e) {
+                    System.out.println("Please enter a number");
+                }
+            }
+
+            System.out.println("How many copies of "+this.books.get(selection).getName()+" would you like to add to your basket? there are "+ this.books.get(selection).getAmountStored()+" available.");
+            
+            while(amountLoop){
+                try {
+                    amount = input.nextInt();
+                    if(amount>=0 && amount<=this.books.get(selection).getAmountStored()){
+                        amountLoop = false;
+                    }
+                    else{
+                        System.out.println("That number is not valid");
+                    }
+                    
+                } catch (Exception e) {
+                    System.out.println("Please enter a number");
+                }
+            }
+
+            System.out.println("Adding "+amount+" copies of "+this.books.get(selection).getName()+" to basket. Press 1 to confirm, press else to return to user menu");
+
+            Scanner why = new Scanner(System.in);
+            
+            if(why.nextLine().equals("1")){
+                this.books.get(selection).setAmountStored(this.books.get(selection).getAmountStored()-amount);
+                this.databaseEditor("update books set amount_stored="+this.books.get(selection).getAmountStored()+" where isbn='"+this.books.get(selection).getISBN()+"'");
+
+                if(this.books.get(selection).getAmountStored() < this.books.get(selection).getMin()){
+                    this.books.get(selection).setAmountStored(this.books.get(selection).getAmountStored()+this.books.get(selection).getPrevMonthSold());
+                    this.databaseEditor("update books set amount_stored="+this.books.get(selection).getAmountStored()+" where isbn='"+this.books.get(selection).getISBN()+"'");
+                }
+
+
+                try {
+                    connection = DriverManager.getConnection("jdbc:postgresql://localhost/Bookstore", "postgres", "tervete123");
+                    Statement st = connection.createStatement();
+                    ResultSet rs = st.executeQuery("select * from basket_contents where user_id='"+this.activeUser.getUserID()+"'");
+                    CheckoutBasket userBasket = new CheckoutBasket(this.activeUser.getUserID(), new HashMap<>());
+
+                    while(rs.next()){
+                        userBasket.getBooks().put(rs.getString(2), rs.getInt(3));
+                    }
+
+
+                    boolean found=false;
+                    for(String i : userBasket.getBooks().keySet()){
+                        if(i.equals(this.books.get(selection).getISBN())){
+                            userBasket.getBooks().put(this.books.get(selection).getISBN(), userBasket.getBooks().get(this.books.get(selection).getISBN())+amount);
+                            found=true;
+                            this.databaseEditor("update basket_contents set amount="+userBasket.getBooks().get(this.books.get(selection).getISBN())+
+                            " where user_id='"+this.activeUser.getUserID()+"' and isbn='"+i+"'");
+                            break;
+                        }
+                    }
+
+                    if(!found){
+                        userBasket.getBooks().put(this.books.get(selection).getISBN(), amount);
+                        this.databaseEditor("insert into basket_contents values ('"+this.activeUser.getUserID()+"', '"+userBasket.getBooks().get(this.books.get(selection).getISBN())+
+                        "', "+amount+");");
+                    }
+
+                    
+                    
+                } catch (Exception e) {
+                    // TODO: handle exception
+                }
+
+                System.out.println("Would you like to add another book from your search to your basket? press 1 for yes, other to return to browse");
+                confirm = why.nextLine();
+                if(!confirm.equals("1")){
+                    return;
+                }
+            }
+        }
+        
     }
 
     public void userView(){

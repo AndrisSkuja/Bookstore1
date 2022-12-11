@@ -18,6 +18,13 @@ public class CheckoutBasket {
     public void setUserID(String userID) {
         this.userID = userID;
     }
+    public HashMap<String, Integer> getBooks() {
+        return books;
+    }
+    public void setBooks(HashMap<String, Integer> books) {
+        this.books = books;
+    }
+    
     
     
     
