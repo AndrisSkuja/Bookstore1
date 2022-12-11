@@ -11,11 +11,12 @@ public class Book {
     private int rating;
     private int min;
     private int booksSold;
+    private int amountStored;
    
    
    
     public Book(String iSBN, String author, String name, String genre, String publisher, int pages, int price,
-            int salesPercent, int rating, int min, int booksSold) {
+            int salesPercent, int rating, int min, int booksSold, int amountStored) {
         ISBN = iSBN;
         this.author = author;
         this.name = name;
@@ -27,6 +28,7 @@ public class Book {
         this.rating = rating;
         this.min = min;
         this.booksSold = booksSold;
+        this.amountStored = amountStored;
     }
     
     public String getISBN() {
@@ -94,6 +96,12 @@ public class Book {
     }
     public void setBooksSold(int booksSold) {
         this.booksSold = booksSold;
+    }
+    public int getAmountStored() {
+        return amountStored;
+    }
+    public void setAmountStored(int amountStored) {
+        this.amountStored = amountStored;
     }
 
     
