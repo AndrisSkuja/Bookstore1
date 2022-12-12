@@ -17,3 +17,8 @@ Meanwhile, the compiled output files will be generated in the `bin` folder by de
 
 The `JAVA PROJECTS` view allows you to manage your dependencies. More details can be found [here](https://github.com/microsoft/vscode-java-dependency#manage-dependencies).
 # Bookstore
+
+In order to run the code, the postgres jar file needs to be added to the classpath for the java.sql import.
+Throughout the code, whenever the database server is accessed, a connection address, user, and password is required. The password and user present in the code would need to be changed to a password and user that has access to your own database.
+
+once these fixes have been made, application can be run and used though the terminal.
