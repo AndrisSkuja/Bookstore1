@@ -26,11 +26,9 @@ public class Bookstore {
         this.activeUser = null;
         do{
             
-            System.out.println("Welcome to Look Inna Book. Press 1 to log in, 2 to create account, 3 to browse without account, or 4 to quit.");
+            System.out.println("Welcome to Look Inna Book. press 1 to log in, 2 to create account, 3 to browse without account, or 4 to quit.");
 
             selection = this.input.nextLine();
-
-            System.out.print("\033[H\033[2J");
 
             if(selection.equals("1")){
                 this.login();
@@ -39,7 +37,7 @@ public class Bookstore {
                 this.createAccount();
             }
             else if(selection.equals("3")){
-                this.gerenalBrowse();
+                this.browse();
             }
             else if(selection.equals("4")){
                 System.out.println("Quitting, thank you for visiting Look Inna Book");
@@ -81,9 +79,6 @@ public class Bookstore {
                     fail = true;
                     System.out.println("That user is not available. Press 1 to enter a different user or anything else to exit");
                     selection = this.input.nextLine();
-
-                    System.out.print("\033[H\033[2J"); //C
-
                     if(!selection.equals("1")){
                         return;
                     }
@@ -174,10 +169,7 @@ public class Bookstore {
         
     }
 
-    /**
-     * typeBrowse determines whether it shows to log in version or the general version of browse. 0 = general, 1 = log in
-     */
-    public void browse(int typeBrowse){
+    public void browse(){
         boolean exit = true;
 
         String search = "";
@@ -243,9 +235,12 @@ public class Bookstore {
                       rs.getInt(8), rs.getInt(9), rs.getInt(10), rs.getInt(11),
                        rs.getInt(12),rs.getInt(13)));
                 }
-
-                exit = endBrowse(0, input);
                 
+                System.out.println("Press 1 to return to search, and any other key to exit");
+                selection = this.input.nextLine();
+                if(!selection.equals("1")){
+                    exit=false;
+                }
             } catch (Exception e) {
                 // TODO: handle exception
             }
@@ -254,45 +249,91 @@ public class Bookstore {
         
     }
 
-    private boolean endBrowse(int i, Scanner input) {
+    public void userBrowse(){
+        boolean exit = true;
 
+        String search = "";
         String selection = "";
+        Connection connection = null;
+        String searchQuery = "";
+        do{
+            this.books= new ArrayList<>();
+            System.out.println("Welcome to browse.");
+            System.out.println("Enter 1 for search by name,");
+            System.out.println("Enter 2 for search by author,");
+            System.out.println("Enter 3 for search by ISBN,");
+            System.out.println("Enter 4 for search by genre,");
+            System.out.println("Enter 5 for search by publisher,");
+            System.out.println("Enter other key to return to user menu");
 
-        if(i == 0){
-             
-            System.out.println("Press 1 to return to search, and any other key to exit");
             selection = this.input.nextLine();
 
-            if(!selection.equals("1")){
-                return false;
+            if(selection.equals("1")){
+                System.out.println("Enter name");
+                search = this.input.nextLine();
+                searchQuery = "select * from books where upper(name) like upper('%"+search+"%')";
             }
-            
-        } else if(i == 1){
-
-            System.out.println("Press 1 to return to search, 2 to checkout books, and any other key to return to user menu");
-            selection = this.input.nextLine();
-            if(selection.equals("2")){
-                this.checkout();
+            else if(selection.equals("2")){
+                System.out.println("Enter author");
+                search = this.input.nextLine();
+                searchQuery = "select * from books where upper(author) like upper('%"+search+"%')";
             }
-            else if(selection.equals("1")){
-                return true;
+            else if(selection.equals("3")){
+                System.out.println("Enter ISBN");
+                search = this.input.nextLine();
+                searchQuery = "select * from books where upper(ISBN) like upper('"+search+"')";
+            }
+            else if(selection.equals("4")){
+                System.out.println("Enter genre");
+                search = this.input.nextLine();
+                searchQuery = "select * from books where upper(genre) like upper('%"+search+"%')";
+            }
+            else if(selection.equals("5")){
+                System.out.println("Enter publisher");
+                search = this.input.nextLine();
+                searchQuery = "select * from books where upper(publisher) like upper('%"+search+"%')";
             }
             else{
-                return false;
+                break;
             }
 
-        }
+            
 
-        return true; //IDK IF IT SHOULD BE FALSE
-    }
+            try {
+                connection = DriverManager.getConnection("jdbc:postgresql://localhost/Bookstore", "postgres", "tervete123");
+                Statement st = connection.createStatement();
+                ResultSet rs = st.executeQuery(searchQuery);
 
+                while(rs.next()){
+                    System.out.println("ISBN: "+rs.getString(1)+" author: "+
+                    rs.getString(2)+" name: "+rs.getString(3)+
+                    " genre: "+rs.getString(4)+" publisher: "+rs.getString(5)+
+                    " number of pages: "+rs.getString(6)+" price: $"+rs.getString(7)+" rating: "+rs.getString(9));
 
-    public void gerenalBrowse(){            
-                browse(0);    
-    }
+                    this.books.add(new Book(rs.getString(1), rs.getString(2), rs.getString(3),
+                     rs.getString(4), rs.getString(5), rs.getInt(6), rs.getInt(7),
+                      rs.getInt(8), rs.getInt(9), rs.getInt(10), rs.getInt(11),
+                       rs.getInt(12),rs.getInt(13)));
+                }
+                
+                System.out.println("Press 1 to return to search, 2 to checkout books, and any other key to return to user menu");
+                selection = this.input.nextLine();
+                if(selection.equals("2")){
+                    this.checkout();
+                }
+                else if(selection.equals("1")){
+                    exit=true;
+                }
+                else{
+                    exit=false;
+                }
+            } catch (Exception e) {
+                // TODO: handle exception
+            }
 
-    public void userBrowse(){      
-               browse(1);
+        }while(exit);
+        
+        
     }
 
     public void checkout(){
@@ -796,12 +837,52 @@ public class Bookstore {
             // TODO: handle exception
         }
         
-    } 
+    }
+    
+    public void servertest(){
+        Connection connection = null;
+
+        try {
+            connection = DriverManager.getConnection("jdbc:postgresql://localhost/Bookstore", "postgres", "tervete123");
+
+            String myString = "insert into users values ('tuser1', 'tbill1', 'tship1', false, 'password');";
+
+             Statement st = connection.createStatement();
+             ResultSet rs = st.executeQuery(myString);
+
+             while(rs.next()){
+                String test = rs.getString("isbn");
+
+                System.out.println(rs.getString(1));
+             }
+
+
+            //  while(rs.next()){
+            //     System.out.println(rs.getString("ISBN")+ " " + rs.getString("author") + " " +  rs.getString("name") + " " + rs.getString("genre") + " " + rs.getString("publisher") + " " + rs.getString("price"));
+            //  }
+
+            connection.close();
+        } catch (Exception e) {
+            // TODO: handle exception
+        }
+    }
+    
+
+    
     
 
 
-   public static void main(String[] args) throws Exception {
+
+
+
+    public static void main(String[] args) throws Exception {
+
+
         Bookstore myBookstore = new Bookstore(0, 0, null, null, new ArrayList<>(), null);
+
+        //myBookstore.servertest();
+
+        //myBookstore.databaseEditor("insert into users values ('tuser2', 'tbill2', 'tship2', false, 'password');");
 
         myBookstore.loginsequence();
     }
