@@ -44,6 +44,18 @@ public class User {
     public void setShippingInfo(String shippingInfo) {
         this.shippingInfo = shippingInfo;
     }
+    public boolean isUserType() {
+        return userType;
+    }
+    public void setUserType(boolean userType) {
+        this.userType = userType;
+    }
+    public String getPassword() {
+        return password;
+    }
+    public void setPassword(String password) {
+        this.password = password;
+    }
 
     
 
